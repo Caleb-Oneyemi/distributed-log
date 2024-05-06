@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Caleb-Oneyemi/distributed-log/internal/repository/memory"
+	"github.com/Caleb-Oneyemi/distributed-log/internal/memory"
 	"github.com/gorilla/mux"
 )
 
