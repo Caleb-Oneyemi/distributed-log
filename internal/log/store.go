@@ -48,11 +48,13 @@ func (s *Store) Append(r []byte) (n uint64, pos uint64, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	//where the store holds the record in its file
+	// where the store holds the record in its file
 	pos = s.size
 
-	//write the record's length in binary to the file buffer
-	//when reading the record, we use this to know how many bytes to read
+	// write the length of the input string in binary to the file buffer
+	// e.g length of 11 is [0 0 0 0 0 0 0 11] and 256 is [0 0 0 0 0 0 1 0]
+	// each field is a byte (0 to 255)
+	// when reading the record, we use this to know how many characters to read
 	if err := binary.Write(s.buf, enc, uint64(len(r))); err != nil {
 		return 0, 0, err
 	}
@@ -83,13 +85,17 @@ func (s *Store) Read(pos uint64) ([]byte, error) {
 	}
 
 	size := make([]byte, lenWidth)
-	// reads len(size) bytes from the file into size starting at offset pos
+	// reads len(size) from the file into size starting at offset pos
+	// this is the binary representation of the records length
+	// e.g length of 11 => [0 0 0 0 0 0 0 11]
 	if _, err := s.File.ReadAt(size, int64(pos)); err != nil {
 		return nil, err
 	}
 
+	// enc.Uint64(size) converts that representation e.g [0 0 0 0 0 0 1 0]
+	// to an unsigned 64 bit integer e.g 256
 	b := make([]byte, enc.Uint64(size))
-	// reads len(b) bytes from the file into b starting at offset pos+lenWidth
+	// reads size number of characters after offset + 8(storage for the length)
 	if _, err := s.File.ReadAt(b, int64(pos+lenWidth)); err != nil {
 		return nil, err
 	}
